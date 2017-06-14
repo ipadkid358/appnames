@@ -1,8 +1,7 @@
 ## Appnames
 
-Work-in-progress port of my [appnames bash script](https://ipadkid358.github.io/scripts/) to Obj-C
+Port of my original appnames script written in bash
 
-TODOs
- - Add support for "stock" apps (apps in `/Applications`)
- - Add options (same as the ones in the bash script)
- 
+[Binary](https://ipadkid358.github.io/scripts/appnames) (compiled tool) available on my website 
+
+*This project is considered finished. Please open an [issue](https://github.com/ipadkid358/appnames/issues) if you have any*
