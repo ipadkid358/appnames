@@ -79,19 +79,19 @@ void appInfo(NSString *appRoot) {
         NSDictionary *info = [[NSDictionary alloc] initWithContentsOfFile:infoPath];
         if (info[@"CFBundleIdentifier"]) {
             NSString *bundleID = info[@"CFBundleIdentifier"];
-            if (info[@"CFBundleDisplayName"]) [output appendString:[NSString stringWithFormat:@"Display Name: %@\n", info[@"CFBundleDisplayName"]]];
-            if (info[@"CFBundleExecutable"]) [output appendString:[NSString stringWithFormat:@"Executable: %@\n", info[@"CFBundleExecutable"]]];
-            if (info[@"CFBundleName"]) [output appendString:[NSString stringWithFormat:@"Bundle Name: %@\n", info[@"CFBundleName"]]];
-            if (bundleGet) [output appendString:[NSString stringWithFormat:@"Bundle ID: %@\n", bundleID]];
+            if (info[@"CFBundleDisplayName"]) [output appendFormat:@"Display Name: %@\n", info[@"CFBundleDisplayName"]];
+            if (info[@"CFBundleExecutable"]) [output appendFormat:@"Executable: %@\n", info[@"CFBundleExecutable"]];
+            if (info[@"CFBundleName"]) [output appendFormat:@"Bundle Name: %@\n", info[@"CFBundleName"]];
+            if (bundleGet) [output appendFormat:@"Bundle ID: %@\n", bundleID];
             [output appendString:@"\n"];
-            if (location) [output appendString:[NSString stringWithFormat:@"Core Files: %@\n", appRoot]];
-            if (documents && [docCheck.allKeys containsObject:bundleID]) [output appendString:[NSString stringWithFormat:@"Documents: %@\n", docCheck[bundleID]]];
+            if (location) [output appendFormat:@"Core Files: %@\n", appRoot];
+            if (documents && [docCheck.allKeys containsObject:bundleID]) [output appendFormat:@"Documents: %@\n", docCheck[bundleID]];
             if (info[@"CFBundleURLTypes"] && urlSchemes) {
                 NSArray *URLs = info[@"CFBundleURLTypes"];
                 [output appendString:@"\nURL Schemes:\n"];
                 for (NSDictionary *mainURL in URLs) {
                     NSArray *subURLs = mainURL[@"CFBundleURLSchemes"];
-                    for (NSString *url in subURLs) [output appendString:[NSString stringWithFormat:@"  %@\n", url]];
+                    for (NSString *url in subURLs) [output appendFormat:@"  %@\n", url];
                 }
             }
             [output appendString:@"\n—————————————\n\n"];
