@@ -1,7 +1,7 @@
 ## Appnames
 
-Port of my original appnames script written in bash
-Now executed asynchronously, appnames is insanely fast
+Port of my original appnames script written in bash.
+Executed asynchronously, appnames is insanely fast
 
 [Binary](http://ipadkid.cf/scripts/appnames) (compiled tool) available on my website 
 
