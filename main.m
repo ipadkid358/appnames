@@ -1,7 +1,6 @@
 #import <Foundation/Foundation.h>
 
 NSString *appInfo(NSString *appRoot);
-void asynCaller(NSString *appRoot);
 BOOL bundleGet = NO;
 BOOL location = NO;
 BOOL documents = NO;
@@ -51,8 +50,11 @@ int main(int argc, char **argv) {
                 if (docsBundle) docCheck[docsBundle] = docsFullPath;
             }
         }
-        // Find app directory and pass to appInfo
-        NSString *hardAppPath = @"/var/containers/Bundle/Application";
+        
+        NSMutableArray *allAppRoots = NSMutableArray.new;
+        
+        // Find app directory and add to array
+        NSString *hardAppPath = @"/private/var/containers/Bundle/Application";
         NSArray *allAppDirs = [fileManager contentsOfDirectoryAtPath:hardAppPath error:NULL];
         for (NSString *topDir in allAppDirs) {
             NSString *topDirPath = [hardAppPath stringByAppendingPathComponent:topDir];
@@ -61,29 +63,33 @@ int main(int argc, char **argv) {
             for (NSString *notFile in inDir) {
                 findAppDir = [topDirPath stringByAppendingPathComponent:notFile];
                 BOOL isAppFolder;
-                if ([fileManager fileExistsAtPath:findAppDir isDirectory:&isAppFolder] && isAppFolder) asynCaller(findAppDir);
+                if ([fileManager fileExistsAtPath:findAppDir isDirectory:&isAppFolder] && isAppFolder) [allAppRoots addObject:findAppDir];
             }
         }
         
         NSString *stockAppsOrigPath = @"/Applications";
         NSArray *stockAppsList = [fileManager contentsOfDirectoryAtPath:stockAppsOrigPath error:NULL];
-        for (NSString *stockApp in stockAppsList) asynCaller([stockAppsOrigPath stringByAppendingPathComponent:stockApp]);
+        for (NSString *stockApp in stockAppsList) [allAppRoots addObject:[stockAppsOrigPath stringByAppendingPathComponent:stockApp]];
+        
+        // asyn stuff
+        CFRunLoopRef runLoop = CFRunLoopGetCurrent();
+        unsigned long appCount = allAppRoots.count;
+        __block int completionCount = 0;
+        for (int increment = 0; increment < appCount; increment++) {
+            dispatch_async(dispatch_get_global_queue(0, 0), ^{
+                NSString *write = appInfo(allAppRoots[increment]);
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    printf("%s", write.UTF8String);
+                    completionCount++;
+                    if (completionCount == appCount) CFRunLoopStop(runLoop);
+                });
+            });
+        }
+        CFRunLoopRun();
+        
     }
     return 0;
-}
-
-void asynCaller(NSString *appRoot) {
-    CFRunLoopRef runLoop = CFRunLoopGetCurrent();
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *writeable = appInfo(appRoot);
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (writeable) printf("%s", writeable.UTF8String);
-            CFRunLoopStop(runLoop);
-        });
-    });
-    CFRunLoopRun();
 }
 
 NSString *appInfo(NSString *appRoot) {
@@ -92,7 +98,10 @@ NSString *appInfo(NSString *appRoot) {
         NSDictionary *info = [[NSDictionary alloc] initWithContentsOfFile:infoPath];
         
         NSString *bundleID = info[@"CFBundleIdentifier"];
-        if (!info[@"CFBundleIcons"] || [info[@"SBAppTags"][0] isEqualToString:@"hidden"] || !bundleID) return nil;
+        
+        BOOL isHidden = [info[@"SBAppTags"][0] isEqualToString:@"hidden"];
+        BOOL noIcons = !info[@"CFBundleIcons"];
+        if (noIcons || isHidden || !bundleID) return @"";
         
         NSMutableString *output = [[NSMutableString alloc] initWithString:@"\n"];
         
@@ -106,20 +115,25 @@ NSString *appInfo(NSString *appRoot) {
         if (bundleName) [output appendFormat:@"Bundle Name: %@\n", bundleName];
         
         if (bundleGet) [output appendFormat:@"Bundle ID: %@\n", bundleID];
-        [output appendString:@"\n"];
-        if (location) [output appendFormat:@"Core Files: %@\n", appRoot];
         
         NSString *docLocation = docCheck[bundleID];
-        if (documents && docLocation) [output appendFormat:@"Documents: %@\n", docLocation];
+        if (location || docLocation) {
+            [output appendString:@"\n"];
+            if (location) [output appendFormat:@"Core Files: %@\n", appRoot];
+            if (docLocation) [output appendFormat:@"Documents: %@\n", docLocation];
+        }
         
-        NSArray *URLs = info[@"CFBundleURLTypes"];
-        if (URLs && urlSchemes) {
-            [output appendString:@"\nURL Schemes:\n"];
-            for (NSDictionary *mainURL in URLs) {
-                NSArray *subURLs = mainURL[@"CFBundleURLSchemes"];
-                for (NSString *url in subURLs) [output appendFormat:@"  %@\n", url];
+        if (urlSchemes) {
+            NSArray *URLs = info[@"CFBundleURLTypes"];
+            if (URLs) {
+                [output appendString:@"\nURL Schemes:\n"];
+                for (NSDictionary *mainURL in URLs) {
+                    NSArray *subURLs = mainURL[@"CFBundleURLSchemes"];
+                    for (NSString *url in subURLs) [output appendFormat:@"  %@\n", url];
+                }
             }
         }
+        
         [output appendString:@"\n—————————————\n"];
         return output;
     }
