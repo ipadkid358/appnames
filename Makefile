@@ -1,6 +1,3 @@
-DEBUG = 0
-ARCHS = armv7 arm64
-
 include $(THEOS)/makefiles/common.mk
 
 TOOL_NAME = appnames

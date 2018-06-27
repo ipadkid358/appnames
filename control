@@ -1,0 +1,8 @@
+Package: com.ipadkid.appnames
+Name: App Names
+Description: Command line tool to list applications names, and other information. Run appnames -h for more information
+Section: Utilities
+Author: ipad_kid <ipadkid358@gmail.com>
+Maintainer: ipad_kid <ipadkid358@gmail.com>
+Architecture: iphoneos-arm
+Version: 0.0.1
